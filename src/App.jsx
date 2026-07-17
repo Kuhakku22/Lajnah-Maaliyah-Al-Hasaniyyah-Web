@@ -6,6 +6,8 @@ import {
   Upload, Clock, Lock, Unlock, User, Eye, EyeOff, LogOut, 
   Info, ShieldAlert
 } from 'lucide-react';
+import pembangunanImg from './assets/pembangunan.jpeg';
+
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('beranda');
@@ -215,7 +217,7 @@ function BerandaView({ setActiveTab }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all border border-slate-100 overflow-hidden group">
             <div className="h-48 overflow-hidden relative">
-              <img src="https://images.unsplash.com/photo-1541888087525-4bf69ad0ff75?auto=format&fit=crop&q=80" alt="Pembangunan" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+              <img src={pembangunanImg} alt="Pembangunan" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
               <div className="absolute top-4 left-4 bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center space-x-1">
                 <Building size={14} /> <span>Pembangunan</span>
               </div>
