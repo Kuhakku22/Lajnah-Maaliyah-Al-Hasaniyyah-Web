@@ -13,6 +13,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('beranda');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [infaqCategory, setInfaqCategory] = useState('pembangunan');
+
+  const navigateToInfaq = (category) => {
+    setInfaqCategory(category);
+    setActiveTab('infaq');
+  };
+
 
   // Custom Toast Message Handler
   const showToast = (message, type = 'success') => {
@@ -68,7 +75,7 @@ export default function App() {
               {/* Primary Action Button (INFAQ) */}
               <div className="pl-4">
                 <button 
-                  onClick={() => setActiveTab('infaq')}
+                  onClick={() => navigateToInfaq('pembangunan')}
                   className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all flex items-center space-x-2 animate-pulse hover:animate-none"
                 >
                   <Heart size={18} />
@@ -110,7 +117,7 @@ export default function App() {
               ))}
               <button 
                 onClick={() => {
-                  setActiveTab('infaq');
+                  navigateToInfaq('pembangunan');
                   setIsMobileMenuOpen(false);
                 }}
                 className="w-full mt-4 bg-amber-500 text-white px-4 py-3 rounded-lg font-bold flex items-center justify-center space-x-2 shadow-md"
@@ -125,12 +132,20 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="pb-16">
-        {activeTab === 'beranda' && <BerandaView setActiveTab={setActiveTab} />}
+        {activeTab === 'beranda' && <BerandaView navigateToInfaq={navigateToInfaq} setActiveTab={setActiveTab} />}
         {activeTab === 'kegiatan' && <KegiatanView />}
         {activeTab === 'transparansi' && <TransparansiView />}
         {activeTab === 'alumni' && <PortalAlumniView showToast={showToast} />}
-        {activeTab === 'infaq' && <InfaqView showToast={showToast} setActiveTab={setActiveTab} />}
+        {activeTab === 'infaq' && (
+          <InfaqView 
+            showToast={showToast} 
+            setActiveTab={setActiveTab} 
+            selectedCategory={infaqCategory}
+            setSelectedCategory={setInfaqCategory}
+          />
+        )}
       </main>
+
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-300 py-12">
@@ -165,7 +180,7 @@ export default function App() {
    COMPONENTS PER HALAMAN
    ========================================= */
 
-function BerandaView({ setActiveTab }) {
+function BerandaView({ navigateToInfaq, setActiveTab }) {
   return (
     <div className="animate-in fade-in duration-500">
       <div className="relative bg-blue-950 text-white overflow-hidden">
@@ -191,7 +206,7 @@ function BerandaView({ setActiveTab }) {
           </p>
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
             <button 
-              onClick={() => setActiveTab('infaq')}
+              onClick={() => navigateToInfaq('pembangunan')}
               className="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-full font-bold shadow-lg hover:shadow-xl transition-all text-lg flex items-center justify-center space-x-2"
             >
               <Heart size={20} />
@@ -207,6 +222,7 @@ function BerandaView({ setActiveTab }) {
           </div>
         </div>
       </div>
+
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
@@ -225,7 +241,7 @@ function BerandaView({ setActiveTab }) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-slate-800 mb-2">Infaq Pembangunan Pondok</h3>
               <p className="text-slate-600 text-sm mb-6 line-clamp-3">Dukungan dana untuk perluasan asrama santri dan fasilitas belajar mengajar di lingkungan Pondok.</p>
-              <button onClick={() => setActiveTab('infaq')} className="w-full py-3 border border-blue-700 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors">Donasi Sekarang</button>
+              <button onClick={() => navigateToInfaq('pembangunan')} className="w-full py-3 border border-blue-700 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors">Donasi Sekarang</button>
             </div>
           </div>
 
@@ -239,7 +255,7 @@ function BerandaView({ setActiveTab }) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-slate-800 mb-2">Zakat Maal & Distribusi Fakir</h3>
               <p className="text-slate-600 text-sm mb-6 line-clamp-3">Tunaikan kewajiban Zakat Maal Anda. Dana akan disalurkan kepada asnaf yang berhak, terutama fakir miskin.</p>
-              <button onClick={() => setActiveTab('infaq')} className="w-full py-3 border border-blue-700 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors">Tunaikan Zakat</button>
+              <button onClick={() => navigateToInfaq('zakat')} className="w-full py-3 border border-blue-700 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors">Tunaikan Zakat</button>
             </div>
           </div>
 
@@ -253,7 +269,7 @@ function BerandaView({ setActiveTab }) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-slate-800 mb-2">Bansos & Santunan Yatim</h3>
               <p className="text-slate-600 text-sm mb-6 line-clamp-3">Donasi darurat kemanusiaan internasional, mitigasi bencana alam, dan santunan rutin untuk Anak Yatim.</p>
-              <button onClick={() => setActiveTab('infaq')} className="w-full py-3 border border-blue-700 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors">Bantu Mereka</button>
+              <button onClick={() => navigateToInfaq('bansos')} className="w-full py-3 border border-blue-700 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors">Bantu Mereka</button>
             </div>
           </div>
         </div>
@@ -782,7 +798,7 @@ function PortalAlumniView({ showToast }) {
   );
 }
 
-function InfaqView({ showToast, setActiveTab }) {
+function InfaqView({ showToast, setActiveTab, selectedCategory, setSelectedCategory }) {
   const [amount, setAmount] = useState(100000);
   const [method, setMethod] = useState('qris');
 
@@ -790,7 +806,12 @@ function InfaqView({ showToast, setActiveTab }) {
 
   const handlePayment = (e) => {
     e.preventDefault();
-    showToast("Mengalihkan ke Payment Gateway (Midtrans)...", "success");
+    const categoryNames = {
+      pembangunan: 'Infaq Pembangunan Pondok',
+      zakat: 'Zakat Maal & Distribusi Fakir',
+      bansos: 'Bansos & Santunan Yatim'
+    };
+    showToast(`Mengalihkan pembayaran ${categoryNames[selectedCategory] || 'Infaq'} sebesar Rp ${amount.toLocaleString('id-ID')} ke Midtrans...`, "success");
     setTimeout(() => {
       setActiveTab('beranda');
     }, 2000);
@@ -806,8 +827,56 @@ function InfaqView({ showToast, setActiveTab }) {
         </div>
         
         <form onSubmit={handlePayment} className="p-8">
+          {/* 1. Kategori Donasi */}
           <div className="mb-8">
-            <label className="block text-sm font-bold text-slate-700 mb-4">1. Pilih Nominal Donasi</label>
+            <label className="block text-sm font-bold text-slate-700 mb-4">1. Pilih Kategori Donasi</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('pembangunan')}
+                className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  selectedCategory === 'pembangunan' 
+                    ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-md scale-[1.02]' 
+                    : 'border-slate-200 text-slate-600 hover:border-blue-200 hover:bg-slate-50'
+                }`}
+              >
+                <Building size={28} className={`mb-3 ${selectedCategory === 'pembangunan' ? 'text-blue-700' : 'text-slate-500'}`} />
+                <div className="font-bold text-sm text-center">Infaq Pembangunan</div>
+                <span className="text-[10px] text-slate-500 mt-1 text-center">Perluasan Asrama Santri</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('zakat')}
+                className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  selectedCategory === 'zakat' 
+                    ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-md scale-[1.02]' 
+                    : 'border-slate-200 text-slate-600 hover:border-blue-200 hover:bg-slate-50'
+                }`}
+              >
+                <Wallet size={28} className={`mb-3 ${selectedCategory === 'zakat' ? 'text-blue-700' : 'text-slate-500'}`} />
+                <div className="font-bold text-sm text-center">Zakat Maal</div>
+                <span className="text-[10px] text-slate-500 mt-1 text-center">Penyaluran Asnaf Fakir</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('bansos')}
+                className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  selectedCategory === 'bansos' 
+                    ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-md scale-[1.02]' 
+                    : 'border-slate-200 text-slate-600 hover:border-blue-200 hover:bg-slate-50'
+                }`}
+              >
+                <Heart size={28} className={`mb-3 ${selectedCategory === 'bansos' ? 'text-blue-700' : 'text-slate-500'}`} />
+                <div className="font-bold text-sm text-center">Bansos & Yatim</div>
+                <span className="text-[10px] text-slate-500 mt-1 text-center">Donasi Kemanusiaan</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <label className="block text-sm font-bold text-slate-700 mb-4">2. Pilih Nominal Donasi</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
               {presetAmounts.map((val) => (
                 <button
@@ -839,12 +908,12 @@ function InfaqView({ showToast, setActiveTab }) {
           </div>
 
           <div className="mb-8">
-            <label className="block text-sm font-bold text-slate-700 mb-4">2. Metode Pembayaran</label>
+            <label className="block text-sm font-bold text-slate-700 mb-4">3. Metode Pembayaran</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <button
                 type="button"
                 onClick={() => setMethod('qris')}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all cursor-pointer ${
                   method === 'qris' ? 'border-blue-600 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
@@ -854,7 +923,7 @@ function InfaqView({ showToast, setActiveTab }) {
               <button
                 type="button"
                 onClick={() => setMethod('va')}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all cursor-pointer ${
                   method === 'va' ? 'border-blue-600 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
@@ -864,7 +933,7 @@ function InfaqView({ showToast, setActiveTab }) {
               <button
                 type="button"
                 onClick={() => setMethod('transfer')}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all cursor-pointer ${
                   method === 'transfer' ? 'border-blue-600 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
@@ -875,12 +944,12 @@ function InfaqView({ showToast, setActiveTab }) {
           </div>
 
           <div className="mb-8 space-y-4">
-            <label className="block text-sm font-bold text-slate-700 mb-2">3. Data Donatur</label>
+            <label className="block text-sm font-bold text-slate-700 mb-2">4. Data Donatur</label>
             <input type="text" placeholder="Nama Lengkap (Opsional)" className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-blue-600 outline-none transition-colors" />
             <input type="email" required placeholder="Alamat Email (Untuk kuitansi)" className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-blue-600 outline-none transition-colors" />
           </div>
 
-          <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2">
+          <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer">
             <span>Lanjutkan Pembayaran</span>
             <ArrowRight size={20} />
           </button>
