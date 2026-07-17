@@ -20,6 +20,29 @@ export default function App() {
     setActiveTab('infaq');
   };
 
+  const DEFAULT_ACTIVITIES = [
+    { title: "Peletakan Batu Pertama Asrama Putra", date: "15 Juli 2026", desc: "Pembangunan tahap 1 asrama berkapasitas 500 santri.", img: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80" },
+    { title: "Distribusi Sembako Fakir Miskin", date: "02 Juli 2026", desc: "Penyaluran dana Zakat Maal kepada 250 KK di Desa Binaan.", img: "https://images.unsplash.com/photo-1593113589914-07553f1bd82f?auto=format&fit=crop&q=80" },
+  ];
+
+  const [activities, setActivities] = useState(() => {
+    const saved = localStorage.getItem('kegiatan_list');
+    return saved ? JSON.parse(saved) : DEFAULT_ACTIVITIES;
+  });
+
+  const handleAddActivity = (newActivity) => {
+    const updated = [newActivity, ...activities];
+    setActivities(updated);
+    localStorage.setItem('kegiatan_list', JSON.stringify(updated));
+  };
+
+  const handleDeleteActivity = (index) => {
+    const updated = activities.filter((_, i) => i !== index);
+    setActivities(updated);
+    localStorage.setItem('kegiatan_list', JSON.stringify(updated));
+  };
+
+
 
   // Custom Toast Message Handler
   const showToast = (message, type = 'success') => {
@@ -133,9 +156,16 @@ export default function App() {
       {/* Main Content Area */}
       <main className="pb-16">
         {activeTab === 'beranda' && <BerandaView navigateToInfaq={navigateToInfaq} setActiveTab={setActiveTab} />}
-        {activeTab === 'kegiatan' && <KegiatanView />}
+        {activeTab === 'kegiatan' && <KegiatanView activities={activities} />}
         {activeTab === 'transparansi' && <TransparansiView />}
-        {activeTab === 'alumni' && <PortalAlumniView showToast={showToast} />}
+        {activeTab === 'alumni' && (
+          <PortalAlumniView 
+            showToast={showToast} 
+            activities={activities}
+            onAddActivity={handleAddActivity}
+            onDeleteActivity={handleDeleteActivity}
+          />
+        )}
         {activeTab === 'infaq' && (
           <InfaqView 
             showToast={showToast} 
@@ -145,6 +175,7 @@ export default function App() {
           />
         )}
       </main>
+
 
 
       {/* Footer */}
@@ -278,14 +309,10 @@ function BerandaView({ navigateToInfaq, setActiveTab }) {
   );
 }
 
-function KegiatanView() {
-  const activities = [
-    { title: "Peletakan Batu Pertama Asrama Putra", date: "15 Juli 2026", desc: "Pembangunan tahap 1 asrama berkapasitas 500 santri.", img: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80" },
-    { title: "Distribusi Sembako Fakir Miskin", date: "02 Juli 2026", desc: "Penyaluran dana Zakat Maal kepada 250 KK di Desa Binaan.", img: "https://images.unsplash.com/photo-1593113589914-07553f1bd82f?auto=format&fit=crop&q=80" },
-  ];
-
+function KegiatanView({ activities }) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-in fade-in">
+
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold text-slate-800 mb-4">Galeri Kegiatan & Penyaluran</h2>
       </div>
@@ -503,8 +530,9 @@ function AlumniLoginView({ onLoginSuccess }) {
   );
 }
 
-function PortalAlumniView({ showToast }) {
+function PortalAlumniView({ showToast, activities, onAddActivity, onDeleteActivity }) {
   const [auth, setAuth] = useState(() => {
+
     const savedAuth = sessionStorage.getItem('alumni_auth');
     const savedName = sessionStorage.getItem('alumni_coordinator_name');
     const savedRegion = sessionStorage.getItem('alumni_coordinator_region');
@@ -609,6 +637,52 @@ function PortalAlumniView({ showToast }) {
     setSetoranAmount('');
   };
 
+  // Tab & Form states for Kegiatan
+  const [activeFormTab, setActiveFormTab] = useState('setoran'); // 'setoran' or 'kegiatan'
+  const [kegiatanTitle, setKegiatanTitle] = useState('');
+  const [kegiatanDate, setKegiatanDate] = useState('');
+  const [kegiatanDesc, setKegiatanDesc] = useState('');
+  const [kegiatanImg, setKegiatanImg] = useState(null);
+  const [kegiatanImgUrl, setKegiatanImgUrl] = useState('');
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        showToast("Ukuran berkas terlalu besar (maksimal 2MB untuk upload langsung). Gunakan tautan URL untuk berkas besar.", "warning");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setKegiatanImg(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleKegiatanSubmit = (e) => {
+    e.preventDefault();
+    const finalImg = kegiatanImg || kegiatanImgUrl || "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80";
+    
+    const newActivity = {
+      title: kegiatanTitle,
+      date: kegiatanDate,
+      desc: kegiatanDesc,
+      img: finalImg
+    };
+
+    onAddActivity(newActivity);
+    showToast("Kegiatan baru berhasil ditambahkan ke Galeri!", "success");
+
+    // Reset Form
+    setKegiatanTitle('');
+    setKegiatanDate('');
+    setKegiatanDesc('');
+    setKegiatanImg(null);
+    setKegiatanImgUrl('');
+  };
+
+
   if (!auth.isAuthenticated) {
     return <AlumniLoginView onLoginSuccess={handleLoginSuccess} />;
   }
@@ -693,8 +767,39 @@ function PortalAlumniView({ showToast }) {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
+           </div>
+
+           {/* Kelola Galeri Kegiatan */}
+           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-8">
+              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                 <div className="flex items-center space-x-2">
+                   <Activity className="text-slate-500" size={18} />
+                   <h3 className="text-md font-bold text-slate-800">Kelola Galeri Kegiatan</h3>
+                 </div>
+                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold">{activities.length} Kegiatan</span>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                {activities.map((item, idx) => (
+                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <img src={item.img} alt={item.title} className="w-12 h-12 object-cover rounded-lg border border-slate-200" />
+                      <div className="max-w-[250px] md:max-w-[400px]">
+                        <h4 className="text-sm font-bold text-slate-800 truncate">{item.title}</h4>
+                        <p className="text-xs text-slate-500">{item.date}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => onDeleteActivity(idx)} 
+                      className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                ))}
+              </div>
+           </div>
+
+         </div>
 
           {/* Tabel Riwayat Setoran Alumni Baru */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -731,66 +836,171 @@ function PortalAlumniView({ showToast }) {
         {/* Kolom Kanan: Form Input Terikat */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-24">
-            <h3 className="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Input Setoran Kolektif Alumni</h3>
-            <form onSubmit={handleFormSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Koordinator Wilayah</label>
-                <select 
-                  required 
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  disabled={auth.region !== 'all'}
-                  className={`w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm ${auth.region !== 'all' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
-                >
-                  <option value="">Pilih Wilayah...</option>
-                  <option value="Jatim">Jawa Timur</option>
-                  <option value="Jateng">Jawa Tengah</option>
-                  <option value="Jabar">Jawa Barat</option>
-                  <option value="LuarJawa">Luar Pulau Jawa</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nama Alumni (Penyetor)</label>
-                <input 
-                  type="text" 
-                  required 
-                  value={alumniName}
-                  onChange={(e) => setAlumniName(e.target.value)}
-                  placeholder="Contoh: Ahmad Abdullah" 
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white" 
-                />
-              </div>
+             {/* Tab Form Headers */}
+             <div className="flex border-b border-slate-200 mb-6">
+               <button
+                 type="button"
+                 onClick={() => setActiveFormTab('setoran')}
+                 className={`w-1/2 pb-3 font-bold text-sm transition-colors border-b-2 text-center cursor-pointer ${
+                   activeFormTab === 'setoran' 
+                     ? 'border-blue-700 text-blue-700' 
+                     : 'border-transparent text-slate-400 hover:text-slate-600'
+                 }`}
+               >
+                 Input Setoran
+               </button>
+               <button
+                 type="button"
+                 onClick={() => setActiveFormTab('kegiatan')}
+                 className={`w-1/2 pb-3 font-bold text-sm transition-colors border-b-2 text-center cursor-pointer ${
+                   activeFormTab === 'kegiatan' 
+                     ? 'border-blue-700 text-blue-700' 
+                     : 'border-transparent text-slate-400 hover:text-slate-600'
+                 }`}
+               >
+                 Upload Kegiatan
+               </button>
+             </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nominal Setoran (Rp)</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-slate-500 sm:text-sm">Rp</span>
-                  </div>
-                  <input 
-                    type="number" 
-                    required 
-                    value={setoranAmount}
-                    onChange={(e) => setSetoranAmount(e.target.value)}
-                    placeholder="0" 
-                    className="w-full border border-slate-300 rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white" 
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Bukti Transfer</label>
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:bg-slate-50 transition-colors group">
-                  <Upload size={24} className="mx-auto text-slate-400 mb-2 group-hover:text-blue-600 transition-colors" />
-                  <span className="text-xs text-slate-500">Klik untuk unggah resi (JPG/PNG/PDF)</span>
-                </div>
-              </div>
+             {activeFormTab === 'setoran' ? (
+               <form onSubmit={handleFormSubmit} className="space-y-5">
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Koordinator Wilayah</label>
+                   <select 
+                     required 
+                     value={selectedRegion}
+                     onChange={(e) => setSelectedRegion(e.target.value)}
+                     disabled={auth.region !== 'all'}
+                     className={`w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm ${auth.region !== 'all' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
+                   >
+                     <option value="">Pilih Wilayah...</option>
+                     <option value="Jatim">Jawa Timur</option>
+                     <option value="Jateng">Jawa Tengah</option>
+                     <option value="Jabar">Jawa Barat</option>
+                     <option value="LuarJawa">Luar Pulau Jawa</option>
+                   </select>
+                 </div>
+                 
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Nama Alumni (Penyetor)</label>
+                   <input 
+                     type="text" 
+                     required 
+                     value={alumniName}
+                     onChange={(e) => setAlumniName(e.target.value)}
+                     placeholder="Contoh: Ahmad Abdullah" 
+                     className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white" 
+                   />
+                 </div>
 
-              <button type="submit" className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition-colors cursor-pointer">
-                Simpan Data Setoran
-              </button>
-            </form>
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Nominal Setoran (Rp)</label>
+                   <div className="relative">
+                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                       <span className="text-slate-500 sm:text-sm">Rp</span>
+                     </div>
+                     <input 
+                       type="number" 
+                       required 
+                       value={setoranAmount}
+                       onChange={(e) => setSetoranAmount(e.target.value)}
+                       placeholder="0" 
+                       className="w-full border border-slate-300 rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white" 
+                     />
+                   </div>
+                 </div>
+                 
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Bukti Transfer</label>
+                   <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:bg-slate-50 transition-colors group">
+                     <Upload size={24} className="mx-auto text-slate-400 mb-2 group-hover:text-blue-600 transition-colors" />
+                     <span className="text-xs text-slate-500">Klik untuk unggah resi (JPG/PNG/PDF)</span>
+                   </div>
+                 </div>
+
+                 <button type="submit" className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition-colors cursor-pointer">
+                   Simpan Data Setoran
+                 </button>
+               </form>
+             ) : (
+               <form onSubmit={handleKegiatanSubmit} className="space-y-5">
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Judul Kegiatan / Penyaluran</label>
+                   <input 
+                     type="text" 
+                     required 
+                     value={kegiatanTitle}
+                     onChange={(e) => setKegiatanTitle(e.target.value)}
+                     placeholder="Contoh: Peletakan Batu Pertama" 
+                     className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white font-medium" 
+                   />
+                 </div>
+
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
+                   <input 
+                     type="text" 
+                     required 
+                     value={kegiatanDate}
+                     onChange={(e) => setKegiatanDate(e.target.value)}
+                     placeholder="Contoh: 17 Juli 2026" 
+                     className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white font-medium" 
+                   />
+                 </div>
+
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Deskripsi Kegiatan</label>
+                   <textarea 
+                     required 
+                     rows="3"
+                     value={kegiatanDesc}
+                     onChange={(e) => setKegiatanDesc(e.target.value)}
+                     placeholder="Tuliskan detail kegiatan atau penyaluran dana..." 
+                     className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white font-medium" 
+                   />
+                 </div>
+
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Opsi A: Unggah Foto Utama</label>
+                   <input 
+                     type="file" 
+                     accept="image/*"
+                     onChange={handleImageChange}
+                     className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none text-xs bg-white cursor-pointer" 
+                   />
+                   {kegiatanImg && (
+                     <div className="mt-2 relative">
+                       <img src={kegiatanImg} alt="Preview" className="w-full h-24 object-cover rounded-lg border border-slate-200" />
+                       <button 
+                         type="button" 
+                         onClick={() => setKegiatanImg(null)} 
+                         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-rose-600 text-white rounded-full px-3 py-1 font-bold text-xs shadow hover:bg-rose-700 transition-colors"
+                       >
+                         Hapus Preview
+                       </button>
+                     </div>
+                   )}
+                 </div>
+
+                 <div className="text-center text-xs font-bold text-slate-400 my-2">atau</div>
+
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">Opsi B: Tautan (URL) Foto / Video</label>
+                   <input 
+                     type="text" 
+                     value={kegiatanImgUrl}
+                     onChange={(e) => setKegiatanImgUrl(e.target.value)}
+                     placeholder="https://images.unsplash.com/..." 
+                     className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm bg-white font-medium" 
+                   />
+                   <p className="text-[10px] text-slate-400 mt-1 italic">Gunakan opsi B ini jika file gambar/video sangat besar atau di-hosting online.</p>
+                 </div>
+
+                 <button type="submit" className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition-colors cursor-pointer">
+                   Tambahkan Kegiatan
+                 </button>
+               </form>
+             )}
           </div>
         </div>
       </div>
