@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Kustomisasi warna kursor ketik (caret-color) global agar senada dengan warna logo */
+input, select, textarea, [contenteditable="true"] {
+  caret-color: #0d3e83 !important;
+}
