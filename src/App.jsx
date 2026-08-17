@@ -1,40 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  CheckCircle, Heart, FileText, Activity, RefreshCw, 
-  Download, LogOut, Lock, User, Eye, EyeOff, ShieldAlert, Unlock, Clock, Upload, TrendingUp, PieChart as PieChartIcon
-} from 'lucide-react';
+import { CheckCircle, RefreshCw, LogOut, Lock, User, Eye, EyeOff, ShieldAlert, Unlock, Clock, Download, PieChart as PieChartIcon, TrendingUp } from 'lucide-react';
 
-import Navbar from './components/Navbar';
+// Public Portal Components
+import PublicNavbar from './components/public/PublicNavbar';
+import PublicFooter from './components/public/PublicFooter';
 import BerandaView from './components/BerandaView';
 import InfaqView from './components/InfaqView';
 import TransparansiView from './components/TransparansiView';
 import EReceiptModal from './components/EReceiptModal';
+
+// Admin Portal Components
+import AdminLoginView from './components/admin/AdminLoginView';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminOverview from './components/admin/AdminOverview';
 import ApprovalView from './components/ApprovalView';
 import GeneralLedgerView from './components/GeneralLedgerView';
 import MunfiqCrmView from './components/MunfiqCrmView';
+import PublicContentMgmt from './components/admin/PublicContentMgmt';
 import AdminManagerView from './components/AdminManagerView';
 
+// Data & Helpers
 import { 
   INITIAL_USERS, 
-  INITIAL_FUNDS_CATEGORIES, 
   INITIAL_CAMPAIGNS, 
   INITIAL_TRANSACTIONS, 
   INITIAL_DISBURSEMENTS, 
   INITIAL_LEDGERS 
 } from './data/mockData';
 
-import pembangunanImg from './assets/pembangunan.jpeg';
-
 const CLOUD_API_URL = "https://jsonblob.com/api/jsonBlob/019fa8a1-d2b4-7f9a-ac25-79390c5dc9da";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('beranda');
-  const [activeRole, setActiveRole] = useState('public'); // 'public', 'bendahara', 'pimpinan', 'admin'
+  // Main Portal State: 'public' or 'admin'
+  const [portalMode, setPortalMode] = useState('public');
+  
+  // Public Portal State
+  const [publicActiveTab, setPublicActiveTab] = useState('beranda'); // 'beranda', 'kegiatan', 'transparansi', 'alumni', 'infaq'
   const [infaqCategory, setInfaqCategory] = useState('pembangunan-asrama');
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [selectedTransactionForReceipt, setSelectedTransactionForReceipt] = useState(null);
 
-  // Core Data States (PSAK 109 & ERD)
+  // Admin Portal State
+  const [adminUser, setAdminUser] = useState(() => {
+    const saved = sessionStorage.getItem('lm_admin_auth');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [activeAdminTab, setActiveAdminTab] = useState('overview'); // 'overview', 'approval', 'ledger', 'crm', 'public_mgmt', 'admin_mgmt'
+
+  // Toast Notification
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Core Persistent States (PSAK 109 & ERD)
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('lm_users');
     return saved ? JSON.parse(saved) : INITIAL_USERS;
@@ -73,28 +88,14 @@ export default function App() {
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Sync state to localStorage
-  useEffect(() => {
-    localStorage.setItem('lm_users', JSON.stringify(users));
-  }, [users]);
+  // Sync to localStorage
+  useEffect(() => { localStorage.setItem('lm_users', JSON.stringify(users)); }, [users]);
+  useEffect(() => { localStorage.setItem('lm_campaigns', JSON.stringify(campaigns)); }, [campaigns]);
+  useEffect(() => { localStorage.setItem('lm_transactions', JSON.stringify(transactions)); }, [transactions]);
+  useEffect(() => { localStorage.setItem('lm_disbursements', JSON.stringify(disbursements)); }, [disbursements]);
+  useEffect(() => { localStorage.setItem('lm_ledgers', JSON.stringify(ledgers)); }, [ledgers]);
 
-  useEffect(() => {
-    localStorage.setItem('lm_campaigns', JSON.stringify(campaigns));
-  }, [campaigns]);
-
-  useEffect(() => {
-    localStorage.setItem('lm_transactions', JSON.stringify(transactions));
-  }, [transactions]);
-
-  useEffect(() => {
-    localStorage.setItem('lm_disbursements', JSON.stringify(disbursements));
-  }, [disbursements]);
-
-  useEffect(() => {
-    localStorage.setItem('lm_ledgers', JSON.stringify(ledgers));
-  }, [ledgers]);
-
-  // Toast Notification Helper
+  // Toast Handler
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
@@ -102,7 +103,8 @@ export default function App() {
 
   const navigateToInfaq = (categorySlug) => {
     setInfaqCategory(categorySlug || 'pembangunan-asrama');
-    setActiveTab('infaq');
+    setPublicActiveTab('infaq');
+    setPortalMode('public');
   };
 
   // Add new Inbound Transaction (Infaq)
@@ -110,7 +112,7 @@ export default function App() {
     const updatedTrx = [newTrx, ...transactions];
     setTransactions(updatedTrx);
 
-    // Update campaign current amount
+    // Update campaign amount
     const updatedCampaigns = campaigns.map(c => {
       if (c.id === newTrx.program_id) {
         return { ...c, current_amount: c.current_amount + Number(newTrx.amount) };
@@ -119,7 +121,7 @@ export default function App() {
     });
     setCampaigns(updatedCampaigns);
 
-    // Auto post ledger entry
+    // Auto post ledger entries
     const newLedgerDebit = {
       id: `ldg-${Date.now()}-1`,
       transaction_id: newTrx.id,
@@ -142,37 +144,27 @@ export default function App() {
     };
     setLedgers([newLedgerDebit, newLedgerCredit, ...ledgers]);
 
-    // Open receipt modal immediately for the new transaction
+    // Open receipt modal
     setSelectedTransactionForReceipt(newTrx);
   };
 
   // Approve Disbursement (Pimpinan Action)
   const handleApproveDisbursement = (disbursementId, trxId, notes) => {
-    const updatedDisbursements = disbursements.map(d => {
-      if (d.id === disbursementId) {
-        return {
-          ...d,
-          approval_status: 'approved',
-          approved_by: 'Habib Husain Al-Hasani (Pimpinan)',
-          approval_notes: notes
-        };
-      }
-      return d;
-    });
-    setDisbursements(updatedDisbursements);
+    setDisbursements(disbursements.map(d => 
+      d.id === disbursementId 
+        ? { ...d, approval_status: 'approved', approved_by: adminUser?.name || 'Pimpinan Lajnah', approval_notes: notes } 
+        : d
+    ));
 
-    // Update transaction status to verified
     let approvedTrx = null;
-    const updatedTransactions = transactions.map(t => {
+    setTransactions(transactions.map(t => {
       if (t.id === trxId) {
         approvedTrx = { ...t, status: 'verified' };
         return approvedTrx;
       }
       return t;
-    });
-    setTransactions(updatedTransactions);
+    }));
 
-    // Post to Double-Entry Ledgers
     if (approvedTrx) {
       const ledgerOutDebit = {
         id: `ldg-${Date.now()}-out1`,
@@ -201,13 +193,9 @@ export default function App() {
   // Reject Disbursement
   const handleRejectDisbursement = (disbursementId, trxId, notes) => {
     setDisbursements(disbursements.map(d => 
-      d.id === disbursementId 
-        ? { ...d, approval_status: 'rejected', approval_notes: notes } 
-        : d
+      d.id === disbursementId ? { ...d, approval_status: 'rejected', approval_notes: notes } : d
     ));
-    setTransactions(transactions.map(t => 
-      t.id === trxId ? { ...t, status: 'rejected' } : t
-    ));
+    setTransactions(transactions.map(t => t.id === trxId ? { ...t, status: 'rejected' } : t));
   };
 
   // Add Campaign
@@ -215,7 +203,7 @@ export default function App() {
     setCampaigns([newCmp, ...campaigns]);
   };
 
-  // Fetch Cloud Activities
+  // Cloud Activities Sync
   const fetchCloudActivities = async (showNotification = false) => {
     setIsLoadingActivities(true);
     try {
@@ -226,23 +214,18 @@ export default function App() {
           setActivities(data);
           localStorage.setItem('kegiatan_list', JSON.stringify(data));
           if (showNotification) {
-            showToast("Galeri kegiatan berhasil diperbarui dari Cloud Server!", "success");
+            showToast("Galeri kegiatan diperbarui dari Cloud!", "success");
           }
         }
       }
     } catch (err) {
-      console.warn("Gagal menyinkronkan dengan cloud server:", err);
-      if (showNotification) {
-        showToast("Koneksi Cloud terkendala. Menampilkan data lokal.", "warning");
-      }
+      console.warn("Gagal sync cloud:", err);
     } finally {
       setIsLoadingActivities(false);
     }
   };
 
-  useEffect(() => {
-    fetchCloudActivities(false);
-  }, []);
+  useEffect(() => { fetchCloudActivities(false); }, []);
 
   const handleAddActivity = async (newActivity) => {
     const updated = [newActivity, ...activities];
@@ -255,7 +238,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated)
       });
-      showToast("Kegiatan berhasil dipublikasikan ke Cloud!", "success");
+      showToast("Kegiatan dipublikasikan ke Cloud!", "success");
     } catch (err) {
       showToast("Tersimpan secara lokal.", "warning");
     } finally {
@@ -269,24 +252,131 @@ export default function App() {
     localStorage.setItem('kegiatan_list', JSON.stringify(updated));
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col justify-between">
-      <div>
-        {/* Toast Notification */}
+  // Admin Auth Handlers
+  const handleAdminLoginSuccess = (account) => {
+    setAdminUser(account);
+    sessionStorage.setItem('lm_admin_auth', JSON.stringify(account));
+    setActiveAdminTab('overview');
+    showToast(`Selamat datang di Portal Admin Lajnah, ${account.name}!`, "success");
+  };
+
+  const handleAdminLogout = () => {
+    setAdminUser(null);
+    sessionStorage.removeItem('lm_admin_auth');
+    showToast("Anda telah keluar dari Portal Admin.", "success");
+  };
+
+  // =========================================
+  // RENDER PORTAL ADMIN LAJNAH MAALIYAH
+  // =========================================
+  if (portalMode === 'admin') {
+    if (!adminUser) {
+      return (
+        <AdminLoginView 
+          onLoginSuccess={handleAdminLoginSuccess} 
+          onBackToPublic={() => setPortalMode('public')} 
+        />
+      );
+    }
+
+    return (
+      <AdminLayout
+        adminUser={adminUser}
+        activeAdminTab={activeAdminTab}
+        setActiveAdminTab={setActiveAdminTab}
+        onLogout={handleAdminLogout}
+        onGoToPublic={() => setPortalMode('public')}
+      >
+        {/* Admin Toast */}
         {toast.show && (
-          <div className="fixed top-12 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3.5 rounded-full shadow-2xl text-white flex items-center space-x-2 transition-all duration-300 bg-blue-900 border border-blue-700 animate-in slide-in-from-top-4">
+          <div className="fixed top-16 right-8 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white flex items-center space-x-2 bg-blue-900 border border-blue-700 animate-in slide-in-from-top-4">
             <CheckCircle size={20} className="text-amber-400 shrink-0" />
             <span className="font-bold text-sm">{toast.message}</span>
           </div>
         )}
 
-        {/* Navigation Bar */}
-        <Navbar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          activeRole={activeRole} 
-          setActiveRole={setActiveRole} 
+        {activeAdminTab === 'overview' && (
+          <AdminOverview 
+            adminUser={adminUser} 
+            transactions={transactions} 
+            disbursements={disbursements} 
+            campaigns={campaigns} 
+            setActiveAdminTab={setActiveAdminTab} 
+          />
+        )}
+
+        {activeAdminTab === 'approval' && (
+          <ApprovalView 
+            showToast={showToast} 
+            transactions={transactions} 
+            disbursements={disbursements} 
+            campaigns={campaigns} 
+            onApproveDisbursement={handleApproveDisbursement} 
+            onRejectDisbursement={handleRejectDisbursement} 
+          />
+        )}
+
+        {activeAdminTab === 'ledger' && (
+          <GeneralLedgerView 
+            transactions={transactions} 
+            ledgers={ledgers} 
+            campaigns={campaigns} 
+          />
+        )}
+
+        {activeAdminTab === 'crm' && (
+          <MunfiqCrmView 
+            transactions={transactions} 
+            users={users} 
+            onSelectTransaction={(trx) => setSelectedTransactionForReceipt(trx)} 
+          />
+        )}
+
+        {activeAdminTab === 'public_mgmt' && (
+          <PublicContentMgmt 
+            showToast={showToast} 
+            campaigns={campaigns} 
+            onAddCampaign={handleAddCampaign} 
+            activities={activities} 
+            onAddActivity={handleAddActivity} 
+            onDeleteActivity={handleDeleteActivity} 
+            isSyncing={isSyncing} 
+            onRefreshActivities={() => fetchCloudActivities(true)} 
+            isLoadingActivities={isLoadingActivities} 
+          />
+        )}
+
+        {activeAdminTab === 'admin_mgmt' && (
+          <AdminManagerView 
+            showToast={showToast} 
+            campaigns={campaigns} 
+            onAddCampaign={handleAddCampaign} 
+          />
+        )}
+      </AdminLayout>
+    );
+  }
+
+  // =========================================
+  // RENDER WEBSITE PUBLIK (DONATUR & MASYARAKAT)
+  // =========================================
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col justify-between">
+      <div>
+        {/* Toast Notification */}
+        {toast.show && (
+          <div className="fixed top-12 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3.5 rounded-full shadow-2xl text-white flex items-center space-x-2 bg-blue-900 border border-blue-700 animate-in slide-in-from-top-4">
+            <CheckCircle size={20} className="text-amber-400 shrink-0" />
+            <span className="font-bold text-sm">{toast.message}</span>
+          </div>
+        )}
+
+        {/* Public Navigation Bar */}
+        <PublicNavbar 
+          activeTab={publicActiveTab} 
+          setActiveTab={setPublicActiveTab} 
           navigateToInfaq={navigateToInfaq} 
+          onOpenAdminPortal={() => setPortalMode('admin')} 
         />
 
         {/* E-Receipt Modal */}
@@ -297,18 +387,18 @@ export default function App() {
           />
         )}
 
-        {/* Main Content Area */}
+        {/* Public Main Content Views */}
         <main className="pb-16">
-          {activeTab === 'beranda' && (
+          {publicActiveTab === 'beranda' && (
             <BerandaView 
               navigateToInfaq={navigateToInfaq} 
-              setActiveTab={setActiveTab} 
+              setActiveTab={setPublicActiveTab} 
               transactions={transactions} 
               campaigns={campaigns} 
             />
           )}
 
-          {activeTab === 'kegiatan' && (
+          {publicActiveTab === 'kegiatan' && (
             <KegiatanView 
               activities={activities} 
               isLoadingActivities={isLoadingActivities} 
@@ -316,7 +406,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'transparansi' && (
+          {publicActiveTab === 'transparansi' && (
             <TransparansiView 
               transactions={transactions} 
               campaigns={campaigns} 
@@ -324,7 +414,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'alumni' && (
+          {publicActiveTab === 'alumni' && (
             <PortalAlumniView 
               showToast={showToast} 
               activities={activities} 
@@ -336,86 +426,30 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'infaq' && (
+          {publicActiveTab === 'infaq' && (
             <InfaqView 
               showToast={showToast} 
-              setActiveTab={setActiveTab} 
+              setActiveTab={setPublicActiveTab} 
               selectedCategory={infaqCategory} 
               setSelectedCategory={setInfaqCategory} 
               campaigns={campaigns} 
               onAddTransaction={handleAddTransaction} 
             />
           )}
-
-          {/* Internal Management Views */}
-          {activeTab === 'approval' && (
-            <ApprovalView 
-              showToast={showToast} 
-              transactions={transactions} 
-              disbursements={disbursements} 
-              campaigns={campaigns} 
-              onApproveDisbursement={handleApproveDisbursement} 
-              onRejectDisbursement={handleRejectDisbursement} 
-            />
-          )}
-
-          {activeTab === 'ledger' && (
-            <GeneralLedgerView 
-              transactions={transactions} 
-              ledgers={ledgers} 
-              campaigns={campaigns} 
-            />
-          )}
-
-          {activeTab === 'crm' && (
-            <MunfiqCrmView 
-              transactions={transactions} 
-              users={users} 
-              onSelectTransaction={(trx) => setSelectedTransactionForReceipt(trx)} 
-            />
-          )}
-
-          {activeTab === 'admin_mgmt' && (
-            <AdminManagerView 
-              showToast={showToast} 
-              campaigns={campaigns} 
-              onAddCampaign={handleAddCampaign} 
-            />
-          )}
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-slate-950 text-slate-300 py-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <h2 className="text-white text-lg font-bold mb-3">Lajnah Maaliyah Al-Hasaniyyah Dalwa</h2>
-            <p className="text-sm text-slate-400 mb-4 leading-relaxed">
-              Lembaga resmi pengelola infaq, sedekah, dan dana kemaslahatan ummat berbasis standar akuntansi syariah <strong>PSAK 109</strong>.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-white font-semibold mb-3">Tautan Cepat</h3>
-            <ul className="space-y-2 text-sm text-slate-400">
-              <li><button onClick={() => setActiveTab('beranda')} className="hover:text-blue-400 cursor-pointer">Beranda</button></li>
-              <li><button onClick={() => setActiveTab('transparansi')} className="hover:text-blue-400 cursor-pointer">Transparansi Keuangan</button></li>
-              <li><button onClick={() => setActiveTab('alumni')} className="hover:text-blue-400 cursor-pointer">Portal Alumni</button></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-white font-semibold mb-3">Kontak & Sekretariat</h3>
-            <p className="text-sm text-slate-400">Jl. Pesantren No. 1, Kota Santri, Indonesia</p>
-            <p className="text-sm text-slate-400 mt-2">Email: info@alhasaniyyah.org</p>
-            <p className="text-sm text-slate-400 mt-1">Telp: (021) 1234-5678</p>
-          </div>
-        </div>
-      </footer>
+      {/* Public Footer */}
+      <PublicFooter 
+        setActiveTab={setPublicActiveTab} 
+        onOpenAdminPortal={() => setPortalMode('admin')} 
+      />
     </div>
   );
 }
 
 /* =========================================
-   LEGACY & AUXILIARY COMPONENTS
+   AUXILIARY PUBLIC VIEWS
    ========================================= */
 
 function KegiatanView({ activities, isLoadingActivities, onRefresh }) {
