@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Home, Activity, FileText, Users, Heart, ShieldCheck, Menu, X, Lock } from 'lucide-react';
+import { Home, Activity, FileText, Users, Heart, ShieldCheck, Menu, X } from 'lucide-react';
 
-export default function PublicNavbar({ activeTab, setActiveTab, navigateToInfaq, onOpenAdminPortal }) {
+export default function PublicNavbar({ activeTab, setActiveTab, navigateToInfaq }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -20,14 +20,9 @@ export default function PublicNavbar({ activeTab, setActiveTab, navigateToInfaq,
             <ShieldCheck size={14} className="text-amber-400" />
             <span>Standard Syariat Akuntansi <strong>PSAK 109</strong> - Lajnah Maaliyah Al-Hasaniyyah</span>
           </div>
-
-          <button
-            onClick={onOpenAdminPortal}
-            className="flex items-center space-x-1.5 bg-blue-900/80 hover:bg-blue-800 text-blue-100 hover:text-white px-3 py-1 rounded-full text-xs font-semibold border border-blue-700 transition-colors cursor-pointer"
-          >
-            <Lock size={12} className="text-amber-400" />
-            <span>Portal Admin Pengurus</span>
-          </button>
+          <span className="text-[11px] text-emerald-400 font-semibold bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800">
+            Transparan & Amanah 100%
+          </span>
         </div>
       </div>
 
@@ -105,17 +100,6 @@ export default function PublicNavbar({ activeTab, setActiveTab, navigateToInfaq,
                 <span>{item.label}</span>
               </button>
             ))}
-
-            <button 
-              onClick={() => {
-                onOpenAdminPortal();
-                setIsMobileMenuOpen(false);
-              }}
-              className="w-full mt-2 bg-slate-900 text-slate-200 px-4 py-3 rounded-lg font-bold flex items-center justify-center space-x-2"
-            >
-              <Lock size={16} className="text-amber-400" />
-              <span>Portal Admin Pengurus</span>
-            </button>
 
             <button 
               onClick={() => {

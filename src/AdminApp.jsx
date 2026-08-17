@@ -205,7 +205,6 @@ export default function AdminApp() {
     return (
       <AdminLoginView 
         onLoginSuccess={handleAdminLoginSuccess} 
-        onBackToPublic={() => window.location.href = '/'} 
       />
     );
   }
@@ -216,7 +215,6 @@ export default function AdminApp() {
       activeAdminTab={activeAdminTab}
       setActiveAdminTab={setActiveAdminTab}
       onLogout={handleAdminLogout}
-      onGoToPublic={() => window.location.href = '/'}
     >
       {/* Toast Notification */}
       {toast.show && (

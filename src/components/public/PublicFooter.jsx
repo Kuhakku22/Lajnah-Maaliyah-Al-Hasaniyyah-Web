@@ -1,7 +1,6 @@
 import React from 'react';
-import { Lock } from 'lucide-react';
 
-export default function PublicFooter({ setActiveTab, onOpenAdminPortal }) {
+export default function PublicFooter({ setActiveTab }) {
   return (
     <footer className="bg-slate-950 text-slate-300 py-12 border-t border-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -10,13 +9,6 @@ export default function PublicFooter({ setActiveTab, onOpenAdminPortal }) {
           <p className="text-sm text-slate-400 mb-4 leading-relaxed">
             Lembaga resmi pengelola infaq, sedekah, dan dana kemaslahatan ummat berbasis standar akuntansi syariah <strong>PSAK 109</strong>.
           </p>
-          <button
-            onClick={onOpenAdminPortal}
-            className="inline-flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
-          >
-            <Lock size={14} className="text-amber-400" />
-            <span>Masuk Portal Admin Lajnah</span>
-          </button>
         </div>
 
         <div>

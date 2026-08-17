@@ -1,36 +1,36 @@
 import React, { useState } from 'react';
-import { Lock, User, Eye, EyeOff, ShieldAlert, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, ShieldAlert, ShieldCheck } from 'lucide-react';
 
-export default function AdminLoginView({ onLoginSuccess, onBackToPublic }) {
+export default function AdminLoginView({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [showDemoInfo, setShowDemoInfo] = useState(true);
-
-  const ADMIN_ACCOUNTS = {
-    pimpinan: { username: 'pimpinan', password: 'pimpinan123', name: 'Habib Husain Al-Hasani', role: 'pimpinan', roleLabel: 'Pimpinan / Ketua Lajnah' },
-    bendahara: { username: 'bendahara', password: 'bendahara123', name: 'Ustadz Ahmad Farisi', role: 'bendahara', roleLabel: 'Bendahara / Keuangan' },
-    admin: { username: 'admin', password: 'admin123', name: 'Administrator Pusat', role: 'admin', roleLabel: 'Superadmin Pusat' },
-  };
 
   const handleLogin = (e) => {
     e.preventDefault();
     setError('');
 
-    const account = ADMIN_ACCOUNTS[username];
-    if (account && account.password === password) {
-      onLoginSuccess(account);
+    // Single unified admin login credentials
+    if ((username === 'admin' || username === 'lajnah') && (password === 'admin123' || password === 'lajnah123')) {
+      onLoginSuccess({
+        id: 'usr-admin',
+        name: 'Pengurus Lajnah Maaliyah',
+        role: 'admin',
+        roleLabel: 'Admin Lajnah Maaliyah'
+      });
     } else {
-      setError('Username atau Kata Sandi Pengurus salah! Silakan periksa kembali.');
+      setError('Username atau Kata Sandi Admin salah! Silakan periksa kembali.');
     }
   };
 
-  const handleQuickLogin = (accKey) => {
-    const acc = ADMIN_ACCOUNTS[accKey];
-    if (acc) {
-      onLoginSuccess(acc);
-    }
+  const handleOneClickLogin = () => {
+    onLoginSuccess({
+      id: 'usr-admin',
+      name: 'Pengurus Lajnah Maaliyah',
+      role: 'admin',
+      roleLabel: 'Admin Lajnah Maaliyah'
+    });
   };
 
   return (
@@ -41,21 +41,13 @@ export default function AdminLoginView({ onLoginSuccess, onBackToPublic }) {
       <div className="absolute top-10 left-10 text-white/5 font-extrabold text-9xl pointer-events-none">PSAK 109</div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <button
-          onClick={onBackToPublic}
-          className="inline-flex items-center space-x-2 text-slate-400 hover:text-white text-xs font-semibold mb-6 transition-colors cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          <span>Kembali ke Website Publik</span>
-        </button>
-
         <div className="text-center">
           <div className="w-16 h-16 bg-blue-900/80 text-amber-400 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-blue-700 shadow-xl backdrop-blur-md">
             <ShieldCheck size={36} />
           </div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Portal Admin Lajnah Maaliyah</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Sistem Internal Pengurus (Bendahara, Pimpinan, & Superadmin)
+            Masuk ke Sistem Pengelolaan Internal
           </p>
         </div>
 
@@ -69,7 +61,7 @@ export default function AdminLoginView({ onLoginSuccess, onBackToPublic }) {
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Username Pengurus</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Username Admin</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                   <User size={18} />
@@ -79,7 +71,7 @@ export default function AdminLoginView({ onLoginSuccess, onBackToPublic }) {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Contoh: pimpinan, bendahara, admin"
+                  placeholder="Masukkan username admin..."
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
@@ -113,35 +105,19 @@ export default function AdminLoginView({ onLoginSuccess, onBackToPublic }) {
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all text-sm cursor-pointer"
             >
-              Masuk ke Dashboard Internal
+              Masuk ke Portal Admin
             </button>
           </form>
 
-          {/* Quick Demo Login Preset Buttons */}
-          <div className="mt-8 pt-6 border-t border-slate-800">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
-              Quick Login Demo Pengurus (1-Klik):
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => handleQuickLogin('pimpinan')}
-                className="bg-purple-950/80 hover:bg-purple-900 border border-purple-800 text-purple-200 text-xs py-2 px-2 rounded-xl font-bold transition-colors cursor-pointer text-center"
-              >
-                Pimpinan
-              </button>
-              <button
-                onClick={() => handleQuickLogin('bendahara')}
-                className="bg-blue-950/80 hover:bg-blue-900 border border-blue-800 text-blue-200 text-xs py-2 px-2 rounded-xl font-bold transition-colors cursor-pointer text-center"
-              >
-                Bendahara
-              </button>
-              <button
-                onClick={() => handleQuickLogin('admin')}
-                className="bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-200 text-xs py-2 px-2 rounded-xl font-bold transition-colors cursor-pointer text-center"
-              >
-                Superadmin
-              </button>
-            </div>
+          {/* Quick Demo Login Button */}
+          <div className="mt-6 pt-5 border-t border-slate-800 text-center">
+            <button
+              type="button"
+              onClick={handleOneClickLogin}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 text-xs py-2.5 px-4 rounded-xl font-bold transition-colors cursor-pointer"
+            >
+              Masuk Langsung (1-Klik Demo Admin)
+            </button>
           </div>
         </div>
       </div>
