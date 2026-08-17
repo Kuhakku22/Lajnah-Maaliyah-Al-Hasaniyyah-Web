@@ -9,16 +9,6 @@ import InfaqView from './components/InfaqView';
 import TransparansiView from './components/TransparansiView';
 import EReceiptModal from './components/EReceiptModal';
 
-// Admin Portal Components
-import AdminLoginView from './components/admin/AdminLoginView';
-import AdminLayout from './components/admin/AdminLayout';
-import AdminOverview from './components/admin/AdminOverview';
-import ApprovalView from './components/ApprovalView';
-import GeneralLedgerView from './components/GeneralLedgerView';
-import MunfiqCrmView from './components/MunfiqCrmView';
-import PublicContentMgmt from './components/admin/PublicContentMgmt';
-import AdminManagerView from './components/AdminManagerView';
-
 // Data & Helpers
 import { 
   INITIAL_USERS, 
@@ -31,25 +21,14 @@ import {
 const CLOUD_API_URL = "https://jsonblob.com/api/jsonBlob/019fa8a1-d2b4-7f9a-ac25-79390c5dc9da";
 
 export default function App() {
-  // Main Portal State: 'public' or 'admin'
-  const [portalMode, setPortalMode] = useState('public');
-  
-  // Public Portal State
   const [publicActiveTab, setPublicActiveTab] = useState('beranda'); // 'beranda', 'kegiatan', 'transparansi', 'alumni', 'infaq'
   const [infaqCategory, setInfaqCategory] = useState('pembangunan-asrama');
   const [selectedTransactionForReceipt, setSelectedTransactionForReceipt] = useState(null);
 
-  // Admin Portal State
-  const [adminUser, setAdminUser] = useState(() => {
-    const saved = sessionStorage.getItem('lm_admin_auth');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [activeAdminTab, setActiveAdminTab] = useState('overview'); // 'overview', 'approval', 'ledger', 'crm', 'public_mgmt', 'admin_mgmt'
-
   // Toast Notification
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Core Persistent States (PSAK 109 & ERD)
+  // Core Persistent States (PSAK 109 & ERD) - Realtime Sync with Admin Portal
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('lm_users');
     return saved ? JSON.parse(saved) : INITIAL_USERS;
@@ -104,7 +83,10 @@ export default function App() {
   const navigateToInfaq = (categorySlug) => {
     setInfaqCategory(categorySlug || 'pembangunan-asrama');
     setPublicActiveTab('infaq');
-    setPortalMode('public');
+  };
+
+  const handleOpenAdminPortal = () => {
+    window.location.href = '/admin.html';
   };
 
   // Add new Inbound Transaction (Infaq)
@@ -146,61 +128,6 @@ export default function App() {
 
     // Open receipt modal
     setSelectedTransactionForReceipt(newTrx);
-  };
-
-  // Approve Disbursement (Pimpinan Action)
-  const handleApproveDisbursement = (disbursementId, trxId, notes) => {
-    setDisbursements(disbursements.map(d => 
-      d.id === disbursementId 
-        ? { ...d, approval_status: 'approved', approved_by: adminUser?.name || 'Pimpinan Lajnah', approval_notes: notes } 
-        : d
-    ));
-
-    let approvedTrx = null;
-    setTransactions(transactions.map(t => {
-      if (t.id === trxId) {
-        approvedTrx = { ...t, status: 'verified' };
-        return approvedTrx;
-      }
-      return t;
-    }));
-
-    if (approvedTrx) {
-      const ledgerOutDebit = {
-        id: `ldg-${Date.now()}-out1`,
-        transaction_id: approvedTrx.id,
-        account_code: '501.100',
-        account_name: `Beban Penyaluran - ${approvedTrx.program_title}`,
-        debit: Number(approvedTrx.amount),
-        credit: 0,
-        balance: Number(approvedTrx.amount),
-        created_at: approvedTrx.date
-      };
-      const ledgerOutCredit = {
-        id: `ldg-${Date.now()}-out2`,
-        transaction_id: approvedTrx.id,
-        account_code: '101.100',
-        account_name: 'Kas & Bank Syariah (Outbound)',
-        debit: 0,
-        credit: Number(approvedTrx.amount),
-        balance: Number(approvedTrx.amount),
-        created_at: approvedTrx.date
-      };
-      setLedgers([ledgerOutDebit, ledgerOutCredit, ...ledgers]);
-    }
-  };
-
-  // Reject Disbursement
-  const handleRejectDisbursement = (disbursementId, trxId, notes) => {
-    setDisbursements(disbursements.map(d => 
-      d.id === disbursementId ? { ...d, approval_status: 'rejected', approval_notes: notes } : d
-    ));
-    setTransactions(transactions.map(t => t.id === trxId ? { ...t, status: 'rejected' } : t));
-  };
-
-  // Add Campaign
-  const handleAddCampaign = (newCmp) => {
-    setCampaigns([newCmp, ...campaigns]);
   };
 
   // Cloud Activities Sync
@@ -252,111 +179,6 @@ export default function App() {
     localStorage.setItem('kegiatan_list', JSON.stringify(updated));
   };
 
-  // Admin Auth Handlers
-  const handleAdminLoginSuccess = (account) => {
-    setAdminUser(account);
-    sessionStorage.setItem('lm_admin_auth', JSON.stringify(account));
-    setActiveAdminTab('overview');
-    showToast(`Selamat datang di Portal Admin Lajnah, ${account.name}!`, "success");
-  };
-
-  const handleAdminLogout = () => {
-    setAdminUser(null);
-    sessionStorage.removeItem('lm_admin_auth');
-    showToast("Anda telah keluar dari Portal Admin.", "success");
-  };
-
-  // =========================================
-  // RENDER PORTAL ADMIN LAJNAH MAALIYAH
-  // =========================================
-  if (portalMode === 'admin') {
-    if (!adminUser) {
-      return (
-        <AdminLoginView 
-          onLoginSuccess={handleAdminLoginSuccess} 
-          onBackToPublic={() => setPortalMode('public')} 
-        />
-      );
-    }
-
-    return (
-      <AdminLayout
-        adminUser={adminUser}
-        activeAdminTab={activeAdminTab}
-        setActiveAdminTab={setActiveAdminTab}
-        onLogout={handleAdminLogout}
-        onGoToPublic={() => setPortalMode('public')}
-      >
-        {/* Admin Toast */}
-        {toast.show && (
-          <div className="fixed top-16 right-8 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white flex items-center space-x-2 bg-blue-900 border border-blue-700 animate-in slide-in-from-top-4">
-            <CheckCircle size={20} className="text-amber-400 shrink-0" />
-            <span className="font-bold text-sm">{toast.message}</span>
-          </div>
-        )}
-
-        {activeAdminTab === 'overview' && (
-          <AdminOverview 
-            adminUser={adminUser} 
-            transactions={transactions} 
-            disbursements={disbursements} 
-            campaigns={campaigns} 
-            setActiveAdminTab={setActiveAdminTab} 
-          />
-        )}
-
-        {activeAdminTab === 'approval' && (
-          <ApprovalView 
-            showToast={showToast} 
-            transactions={transactions} 
-            disbursements={disbursements} 
-            campaigns={campaigns} 
-            onApproveDisbursement={handleApproveDisbursement} 
-            onRejectDisbursement={handleRejectDisbursement} 
-          />
-        )}
-
-        {activeAdminTab === 'ledger' && (
-          <GeneralLedgerView 
-            transactions={transactions} 
-            ledgers={ledgers} 
-            campaigns={campaigns} 
-          />
-        )}
-
-        {activeAdminTab === 'crm' && (
-          <MunfiqCrmView 
-            transactions={transactions} 
-            users={users} 
-            onSelectTransaction={(trx) => setSelectedTransactionForReceipt(trx)} 
-          />
-        )}
-
-        {activeAdminTab === 'public_mgmt' && (
-          <PublicContentMgmt 
-            showToast={showToast} 
-            campaigns={campaigns} 
-            onAddCampaign={handleAddCampaign} 
-            activities={activities} 
-            onAddActivity={handleAddActivity} 
-            onDeleteActivity={handleDeleteActivity} 
-            isSyncing={isSyncing} 
-            onRefreshActivities={() => fetchCloudActivities(true)} 
-            isLoadingActivities={isLoadingActivities} 
-          />
-        )}
-
-        {activeAdminTab === 'admin_mgmt' && (
-          <AdminManagerView 
-            showToast={showToast} 
-            campaigns={campaigns} 
-            onAddCampaign={handleAddCampaign} 
-          />
-        )}
-      </AdminLayout>
-    );
-  }
-
   // =========================================
   // RENDER WEBSITE PUBLIK (DONATUR & MASYARAKAT)
   // =========================================
@@ -376,7 +198,7 @@ export default function App() {
           activeTab={publicActiveTab} 
           setActiveTab={setPublicActiveTab} 
           navigateToInfaq={navigateToInfaq} 
-          onOpenAdminPortal={() => setPortalMode('admin')} 
+          onOpenAdminPortal={handleOpenAdminPortal} 
         />
 
         {/* E-Receipt Modal */}
@@ -442,7 +264,7 @@ export default function App() {
       {/* Public Footer */}
       <PublicFooter 
         setActiveTab={setPublicActiveTab} 
-        onOpenAdminPortal={() => setPortalMode('admin')} 
+        onOpenAdminPortal={handleOpenAdminPortal} 
       />
     </div>
   );
