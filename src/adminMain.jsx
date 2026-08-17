@@ -1,10 +1,14 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import AdminApp from './AdminApp.jsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import AdminApp from './AdminApp.jsx';
 
-createRoot(document.getElementById('admin-root')).render(
-  <StrictMode>
-    <AdminApp />
-  </StrictMode>,
-)
+const rootElement = document.getElementById('admin-root') || document.getElementById('root');
+
+if (rootElement) {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <AdminApp />
+    </StrictMode>,
+  );
+}
