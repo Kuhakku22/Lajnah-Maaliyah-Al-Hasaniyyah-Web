@@ -1,11 +1,11 @@
 import React from 'react';
 import { 
   Heart, FileText, Building, Users, Globe, Wallet, 
-  Activity, ArrowRight, ShieldCheck, CheckCircle2, TrendingUp
+  Activity, ArrowRight, ShieldCheck, CheckCircle2, TrendingUp, Calculator
 } from 'lucide-react';
 import { formatRupiah, calculatePsak109Summary } from '../services/accountingService';
 
-export default function BerandaView({ navigateToInfaq, setActiveTab, transactions, campaigns }) {
+export default function BerandaView({ navigateToInfaq, setActiveTab, transactions, campaigns, onOpenZakatCalculator }) {
   const summary = calculatePsak109Summary(transactions, campaigns);
 
   return (
@@ -26,7 +26,7 @@ export default function BerandaView({ navigateToInfaq, setActiveTab, transaction
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 flex flex-col justify-center min-h-[520px]">
-          <div className="flex items-center space-x-2 mb-4">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="inline-flex items-center space-x-1.5 py-1 px-3.5 rounded-full bg-blue-900/80 text-blue-200 text-xs font-semibold border border-blue-700/60 shadow-sm backdrop-blur-md">
               <ShieldCheck size={14} className="text-amber-400" />
               <span>Standar Akuntansi PSAK 109</span>
@@ -52,12 +52,13 @@ export default function BerandaView({ navigateToInfaq, setActiveTab, transaction
               <Heart size={20} />
               <span>Mulai Donasi Sekarang</span>
             </button>
+
             <button 
-              onClick={() => setActiveTab('transparansi')}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-full font-semibold transition-all text-lg flex items-center justify-center space-x-2 cursor-pointer"
+              onClick={onOpenZakatCalculator}
+              className="bg-blue-800/90 hover:bg-blue-800 backdrop-blur-md border border-blue-600/60 text-amber-300 hover:text-white px-7 py-4 rounded-full font-bold transition-all text-lg flex items-center justify-center space-x-2 cursor-pointer shadow-md"
             >
-              <FileText size={20} />
-              <span>Lihat Transparansi Dana</span>
+              <Calculator size={20} className="text-amber-400" />
+              <span>Hitung Zakat Anda</span>
             </button>
           </div>
         </div>
@@ -122,8 +123,34 @@ export default function BerandaView({ navigateToInfaq, setActiveTab, transaction
         </div>
       </div>
 
+      {/* Banner pemicu Kalkulator Zakat */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+        <div className="bg-gradient-to-r from-blue-900 via-blue-950 to-slate-900 text-white rounded-3xl p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-blue-800">
+          <div className="flex items-center space-x-5">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-lg font-bold">
+              <Calculator size={36} />
+            </div>
+            <div>
+              <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">Fitur Syar'i Terpadu</span>
+              <h3 className="text-2xl font-extrabold mt-0.5">Bingung Menghitung Zakat Maal & Profesi Anda?</h3>
+              <p className="text-blue-200 text-sm mt-1 max-w-xl">
+                Gunakan Kalkulator Zakat Syar'i kami untuk menghitung zakat penghasilan, emas, dan tabungan sesuai nisab syariat Islam dengan akurat.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenZakatCalculator}
+            className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg transition-all flex items-center space-x-2 shrink-0 cursor-pointer"
+          >
+            <Calculator size={18} />
+            <span>Buka Kalkulator Zakat</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Campaign List with Progress Bars */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
           <div>
             <span className="text-blue-700 font-bold text-xs uppercase tracking-wider">Program Unggulan</span>
@@ -131,7 +158,7 @@ export default function BerandaView({ navigateToInfaq, setActiveTab, transaction
           </div>
           <button 
             onClick={() => setActiveTab('transparansi')}
-            className="text-blue-700 font-bold text-sm hover:text-blue-900 flex items-center space-x-1 mt-4 md:mt-0"
+            className="text-blue-700 font-bold text-sm hover:text-blue-900 flex items-center space-x-1 mt-4 md:mt-0 cursor-pointer"
           >
             <span>Lihat Laporan Transparansi Lengkap</span>
             <ArrowRight size={16} />

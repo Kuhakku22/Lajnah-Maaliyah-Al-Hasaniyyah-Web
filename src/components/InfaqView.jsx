@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Heart, Building, Wallet, ArrowRight, EyeOff, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Heart, Building, Wallet, ArrowRight, EyeOff, ShieldCheck, CheckCircle, Calculator } from 'lucide-react';
 import { generateTrxCode } from '../services/accountingService';
 
-export default function InfaqView({ showToast, setActiveTab, selectedCategory, setSelectedCategory, campaigns, onAddTransaction }) {
+export default function InfaqView({ showToast, setActiveTab, selectedCategory, setSelectedCategory, campaigns, onAddTransaction, onOpenZakatCalculator }) {
   const [amount, setAmount] = useState(100000);
   const [method, setMethod] = useState('qris');
   const [donorName, setDonorName] = useState('');
@@ -55,6 +55,18 @@ export default function InfaqView({ showToast, setActiveTab, selectedCategory, s
           <p className="text-blue-100 text-sm max-w-md mx-auto">
             Niatkan infaq terbaik Anda. Dana dicatat secara khusus dan transparan sesuai syariat.
           </p>
+
+          {/* Trigger Button Kalkulator Zakat */}
+          {onOpenZakatCalculator && (
+            <button
+              type="button"
+              onClick={onOpenZakatCalculator}
+              className="mt-4 inline-flex items-center space-x-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shadow-sm"
+            >
+              <Calculator size={16} />
+              <span>Hitung Kewajiban Zakat dengan Kalkulator Syar'i</span>
+            </button>
+          )}
         </div>
         
         <form onSubmit={handleSubmit} className="p-8">
@@ -95,7 +107,20 @@ export default function InfaqView({ showToast, setActiveTab, selectedCategory, s
 
           {/* 2. Pilih Nominal Donasi */}
           <div className="mb-8">
-            <label className="block text-sm font-bold text-slate-700 mb-3">2. Nominal Infaq (Rp)</label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-bold text-slate-700">2. Nominal Infaq (Rp)</label>
+              {onOpenZakatCalculator && (
+                <button
+                  type="button"
+                  onClick={onOpenZakatCalculator}
+                  className="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center space-x-1 cursor-pointer"
+                >
+                  <Calculator size={14} />
+                  <span>Kalkulator Zakat</span>
+                </button>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
               {presetAmounts.map((val) => (
                 <button

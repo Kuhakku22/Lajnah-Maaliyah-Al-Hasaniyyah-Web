@@ -8,6 +8,7 @@ import BerandaView from './components/BerandaView';
 import InfaqView from './components/InfaqView';
 import TransparansiView from './components/TransparansiView';
 import EReceiptModal from './components/EReceiptModal';
+import ZakatCalculatorModal from './components/public/ZakatCalculatorModal';
 
 // Data & Helpers
 import { 
@@ -24,6 +25,7 @@ export default function App() {
   const [publicActiveTab, setPublicActiveTab] = useState('beranda'); // 'beranda', 'kegiatan', 'transparansi', 'alumni', 'infaq'
   const [infaqCategory, setInfaqCategory] = useState('pembangunan-asrama');
   const [selectedTransactionForReceipt, setSelectedTransactionForReceipt] = useState(null);
+  const [isZakatCalculatorOpen, setIsZakatCalculatorOpen] = useState(false);
 
   // Toast Notification
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -87,6 +89,12 @@ export default function App() {
 
   const handleOpenAdminPortal = () => {
     window.location.href = '/admin.html';
+  };
+
+  const handleApplyZakat = (zakatAmount, categorySlug) => {
+    setInfaqCategory(categorySlug || 'santunan-yatim');
+    setPublicActiveTab('infaq');
+    showToast(`Nominal Zakat sebesar Rp ${zakatAmount.toLocaleString('id-ID')} telah disiapkan pada formulir.`, "success");
   };
 
   // Add new Inbound Transaction (Infaq)
@@ -209,6 +217,13 @@ export default function App() {
           />
         )}
 
+        {/* Zakat Calculator Modal */}
+        <ZakatCalculatorModal
+          isOpen={isZakatCalculatorOpen}
+          onClose={() => setIsZakatCalculatorOpen(false)}
+          onApplyZakat={handleApplyZakat}
+        />
+
         {/* Public Main Content Views */}
         <main className="pb-16">
           {publicActiveTab === 'beranda' && (
@@ -217,6 +232,7 @@ export default function App() {
               setActiveTab={setPublicActiveTab} 
               transactions={transactions} 
               campaigns={campaigns} 
+              onOpenZakatCalculator={() => setIsZakatCalculatorOpen(true)}
             />
           )}
 
@@ -256,6 +272,7 @@ export default function App() {
               setSelectedCategory={setInfaqCategory} 
               campaigns={campaigns} 
               onAddTransaction={handleAddTransaction} 
+              onOpenZakatCalculator={() => setIsZakatCalculatorOpen(true)}
             />
           )}
         </main>
